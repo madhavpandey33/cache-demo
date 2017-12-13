@@ -3,6 +3,7 @@ package com.example.cachedemo.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,6 +25,9 @@ public class CacheDemoController {
 	@Autowired
 	private PersonRepository personRepository;
 	
+	@Autowired
+	private CacheManager cacheManager;
+	
 	@Cacheable(value="persons", key="#id", unless="#result==null")
 	@RequestMapping(method = RequestMethod.GET, path="/persons/{id}")
 	public Person getPerson(@PathVariable(name = "id") long id) {
@@ -41,6 +45,8 @@ public class CacheDemoController {
 	@CachePut(value = "persons", key="{#person.id, #root.target.DEFAULT_KEY}",  unless="#result==null")
 	@RequestMapping(method = RequestMethod.POST, path="/save")
 	public Person savePerson(@RequestBody Person person) {
+		
+		System.out.println("Cache Manager:"+ this.cacheManager.getClass().getName());
 		return this.personRepository.save(person);
 	}
 	
@@ -48,7 +54,7 @@ public class CacheDemoController {
 		System.out.println("In exict");
 	}
 	
-	// @CacheEvict(value = "persons", key= "#id", allEntries =  true)
+	@CacheEvict(value = "persons", key= "#id", allEntries =  true)
 	@RequestMapping(method = RequestMethod.GET, path="/delete/{id}")
 	public void deletePerson(@PathVariable(value="id") long id) {
 		this.personRepository.delete(id);
